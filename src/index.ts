@@ -3,6 +3,7 @@ import multer from "multer";
 import { batchParse, parse } from "./utils";
 import type { LiteParseConfig, ParsedPage } from "@llamaindex/liteparse";
 import { PrefixedLogger } from "./logger";
+import { getRLFactory } from "./rate-limit";
 
 const port = 5000;
 const app = express();
@@ -19,6 +20,15 @@ parsed text) or `application/json` (the full parsed pages object)
 app.post("/parse", upload.single("file"), async (req, res) => {
   const logger = new PrefixedLogger("[POST /parse]");
   logger.info("Received request");
+  const limiter = await getRLFactory().getLimiter();
+  const ip = req.ip ?? req.socket.remoteAddress ?? "unknown";
+  try {
+    await limiter.consume(ip);
+  } catch (e) {
+    logger.error(`Request has been rate limited due to ${e}`);
+    res.status(429).send({ detail: "Too many requests" });
+    return;
+  }
   const fl = req.file;
   if (!fl) {
     logger.error("No `file` provided");
@@ -69,6 +79,15 @@ defines whether the response will contain parsed text or parsed pages objects.
 app.post("/batch/parse", upload.array("files"), async (req, res) => {
   const logger = new PrefixedLogger("[POST /batch/parse]");
   logger.info("Received request");
+  const limiter = await getRLFactory().getLimiter();
+  const ip = req.ip ?? req.socket.remoteAddress ?? "unknown";
+  try {
+    await limiter.consume(ip);
+  } catch (e) {
+    logger.error(`Request has been rate limited due to ${e}`);
+    res.status(429).send({ detail: "Too many requests" });
+    return;
+  }
   if (!req.files) {
     logger.error("No `files` provided");
     res.status(400).send({
