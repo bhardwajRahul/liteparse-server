@@ -9,6 +9,7 @@ An Express server that exposes [`@llamaindex/liteparse`](https://www.npmjs.com/p
 - [Requirements](#requirements)
 - [Environment variables](#environment-variables)
 - [Running the server](#running-the-server)
+- [Running with Docker](#running-with-docker)
 - [Supporting services](#supporting-services)
 - [Caching](#caching)
 - [API reference](#api-reference)
@@ -28,14 +29,15 @@ An Express server that exposes [`@llamaindex/liteparse`](https://www.npmjs.com/p
 
 Create a `.env` file in the project root. The following variables are required:
 
-| Variable          | Description                                            | Example                      |
-|-------------------|--------------------------------------------------------|------------------------------|
-| `REDIS_URI`       | URI of the Redis instance used for rate limiting       | `redis://localhost:6379`     |
-| `REDIS_PASSWORD`  | Password for Redis                                     | `s3cr3t`                     |
-| `GRAFANA_USER`    | Grafana admin username                                 | `admin`                      |
-| `GRAFANA_PASS`    | Grafana admin password                                 | `admin`                      |
+| Variable                   | Description                                                                                  | Example                            |
+|----------------------------|----------------------------------------------------------------------------------------------|------------------------------------|
+| `REDIS_URI`                | URI of the Redis instance used for rate limiting                                             | `redis://localhost:6379`           |
+| `REDIS_PASSWORD`           | Password for Redis                                                                           | `s3cr3t`                           |
+| `GRAFANA_USER`             | Grafana admin username                                                                       | `admin`                            |
+| `GRAFANA_PASS`             | Grafana admin password                                                                       | `admin`                            |
+| `OTEL_COLLECTOR_ENDPOINT`  | Base URL of the OpenTelemetry Collector (no path suffix). The server appends `/v1/traces` and `/v1/metrics` automatically. | `http://localhost:4318` |
 
-The OpenTelemetry SDK reads the collector endpoint from the standard `OTEL_EXPORTER_OTLP_ENDPOINT` environment variable. When the collector runs via Docker Compose the default (`http://localhost:4318`) works out of the box.
+> **Note:** When running the server locally (outside Docker), set `OTEL_COLLECTOR_ENDPOINT=http://localhost:4318` and `REDIS_URI=redis://localhost:6379`. When running via Docker Compose, set them to `http://otel-collector:4318` and `redis://redis:6379` respectively, so the server can reach the collector and Redis instance over the internal Docker network (see [Running with Docker](#running-with-docker)).
 
 ---
 
@@ -60,6 +62,43 @@ bun --preload ./src/instrumentation.ts src/index.ts
 ```
 
 The server listens on **port 5000**.
+
+---
+
+## Running with Docker
+
+`compose.yaml` includes a `liteparse-server` service that builds the image locally and starts the full stack — server, Redis, OTel Collector, Jaeger, Prometheus, and Grafana — in one command.
+
+### 1. Set environment variables
+
+Add the following to your `.env` file (in addition to the variables listed above). When running inside Docker Compose the collector is reachable via its service name:
+
+```env
+OTEL_COLLECTOR_ENDPOINT=http://otel-collector:4318
+REDIS_URI=redis://redis:6379
+```
+
+### 2. Build and start the full stack
+
+```bash
+docker compose up -d --build
+```
+
+The `--build` flag rebuilds the `liteparse-server` image from the local `Dockerfile`. Omit it on subsequent starts if the source hasn't changed.
+
+### 3. Verify
+
+```bash
+docker compose ps
+```
+
+The API server will be available at **http://localhost:5000**, and all supporting service UIs remain on their usual ports (Jaeger: 16686, Prometheus: 9090, Grafana: 3000).
+
+### Stopping the stack
+
+```bash
+docker compose down
+```
 
 ---
 

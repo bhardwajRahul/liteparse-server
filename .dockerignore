@@ -1,0 +1,10 @@
+dist/
+node_modules/
+data/
+grafana/
+*.yaml
+.env
+README.md
+scripts/
+LICENSE
+CONTRIBUTING.md

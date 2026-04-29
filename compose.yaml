@@ -1,4 +1,18 @@
 services:
+  liteparse-server:
+    image: liteparse-server
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: liteparse-server
+    ports:
+      - 5000:5000
+    environment:
+      REDIS_URI: ${REDIS_URI}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      # this only represents the base path (e.g. http://otel-collector:4318, NOT http://otel-collector:4318/v1/traces)
+      OTEL_COLLECTOR_ENDPOINT: ${OTEL_COLLECTOR_ENDPOINT}
+
   redis:
     image: redis:latest
     container_name: redis
@@ -14,6 +28,7 @@ services:
   otel-collector:
     image: otel/opentelemetry-collector-contrib:latest
     command: ["--config=/etc/otel-collector.yaml"]
+    container_name: otel-collector
     volumes:
       - ./otel-collector.yaml:/etc/otel-collector.yaml
     ports:
@@ -24,11 +39,13 @@ services:
 
   jaeger:
     image: jaegertracing/all-in-one:latest
+    container_name: jaeger
     ports:
       - "16686:16686"
 
   prometheus:
     image: prom/prometheus:latest
+    container_name: prometheus
     volumes:
       - ./prometheus.yaml:/etc/prometheus/prometheus.yml
     ports:
@@ -36,6 +53,7 @@ services:
 
   grafana:
     image: grafana/grafana:latest
+    container_name: grafana
     ports:
       - "3000:3000"
     environment:

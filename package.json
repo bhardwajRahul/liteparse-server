@@ -1,8 +1,19 @@
 {
-  "name": "liteparse-server",
+  "name": "@llamaindex/liteparse-server",
   "module": "src/index.ts",
   "type": "module",
-  "private": true,
+  "author": {
+    "name": "Clelia Astra Bertelli",
+    "email": "clelia@runllama.ai"
+  },
+  "description": "API server running LiteParse to parse and screenshot files, wrote in Express.js",
+  "keywords": [
+    "liteparse",
+    "document-parsing",
+    "ocr",
+    "server",
+    "express-js"
+  ],
   "devDependencies": {
     "@types/bun": "latest",
     "@types/express": "^5.0.6",
@@ -26,5 +37,9 @@
     "multer": "^2.1.1",
     "rate-limiter-flexible": "^11.0.1",
     "tslog": "^4.10.2"
+  },
+  "scripts": {
+    "start:bun": "bun run --preload ./src/instrumentation.ts src/index.ts",
+    "start:node": "node --import ./src/instrumentation.ts src/index.ts"
   }
 }

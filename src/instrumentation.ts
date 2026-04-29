@@ -5,9 +5,13 @@ import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-proto";
 import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
 
 const sdk = new NodeSDK({
-  traceExporter: new OTLPTraceExporter(),
+  traceExporter: new OTLPTraceExporter({
+    url: `${process.env.OTEL_COLLECTOR_ENDPOINT!}/v1/traces`,
+  }),
   metricReader: new PeriodicExportingMetricReader({
-    exporter: new OTLPMetricExporter(),
+    exporter: new OTLPMetricExporter({
+      url: `${process.env.OTEL_COLLECTOR_ENDPOINT!}/v1/metrics`,
+    }),
   }),
   instrumentations: [getNodeAutoInstrumentations()],
   serviceName: "liteparse-server",
