@@ -95,3 +95,23 @@ export const httpRateLimitedTotal = meter.createCounter(
   "liteparse.http.rate_limited_total",
   { description: "Total number of rate-limited HTTP requests" },
 );
+
+// Cache metrics
+
+/** Total number of cache hits for parse workloads (incremented per hit). */
+export const cacheParseHitsTotal = meter.createCounter(
+  "liteparse.parse.cache_hits",
+  { description: "Total number of cache hits for parse" },
+);
+
+/** Total number of cache hits for parse workloads (incremented per hit). */
+export const cacheBatchParseHitsTotal = meter.createCounter(
+  "liteparse.batch_parse.cache_hits",
+  { description: "Total number of cache hits for batchParse" },
+);
+
+/** Total number of cache hits for parse workloads (incremented per hit). */
+export const cacheScreenshotHitsTotal = meter.createCounter(
+  "liteparse.screenshot.cache_hits",
+  { description: "Total number of cache hits for screenshot" },
+);

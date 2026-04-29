@@ -9,7 +9,11 @@ import {
   httpRequestsTotal,
   httpDurationMs,
   httpRateLimitedTotal,
+  cacheParseHitsTotal,
+  cacheBatchParseHitsTotal,
+  cacheScreenshotHitsTotal,
 } from "./telemetry";
+import { getCache, getFileHash, getFilesHash } from "./cache";
 
 const port = 5000;
 const app = express();
@@ -82,6 +86,25 @@ app.post("/parse", upload.single("file"), async (req, res) => {
     "parse.mode": useText ? "text" : "pages",
   });
 
+  const cache = getCache();
+  const fileHash = getFileHash(fl);
+  const stored = await cache.getParsed(fileHash, useText, loadedConfig);
+
+  if (stored) {
+    trace.getActiveSpan()?.setAttribute("cache.hit", "true");
+    cacheParseHitsTotal.add(1);
+    logger.info("Returning cached parsed result");
+    res
+      .header(
+        "Content-Type",
+        typeof stored === "string" ? "text/plain" : "application/json",
+      )
+      .status(200)
+      .send(stored);
+    return;
+  }
+  trace.getActiveSpan()?.setAttribute("cache.hit", "false");
+
   if (useText) {
     const result = (await parse({
       file: fl,
@@ -90,6 +113,8 @@ app.post("/parse", upload.single("file"), async (req, res) => {
     })) as string;
     res.header("Content-Type", "text/plain").status(200).send(result);
     logger.info("Completed request successfully");
+    await cache.setParsed(fileHash, useText, loadedConfig, result);
+    logger.debug("Uploaded result to cache");
     return;
   } else {
     const result = (await parse({
@@ -101,6 +126,8 @@ app.post("/parse", upload.single("file"), async (req, res) => {
       .status(200)
       .send({ pages: result });
     logger.info("Completed request successfully");
+    await cache.setParsed(fileHash, useText, loadedConfig, result);
+    logger.debug("Uploaded result to cache");
     return;
   }
 });
@@ -168,27 +195,46 @@ app.post("/batch/parse", upload.array("files"), async (req, res) => {
     "parse.mode": useText ? "text" : "pages",
   });
 
+  const cache = getCache();
+  const filesHash = getFilesHash(fls);
+  const stored = await cache.getBatchParsed(filesHash, useText, loadedConfig);
+
+  if (stored) {
+    trace.getActiveSpan()?.setAttribute("cache.hit", "true");
+    cacheBatchParseHitsTotal.add(1);
+    logger.info("Returning cached batch-parsed result");
+    res.header("Content-Type", "application/json").status(200).send(stored);
+    return;
+  }
+  trace.getActiveSpan()?.setAttribute("cache.hit", "false");
+
   if (useText) {
     const result = await batchParse({
       files: fls,
       text: useText,
       config: loadedConfig,
     });
-    logger.info("Completed request successfully");
-    return res
+    res
       .header("Content-Type", "application/json")
       .status(200)
       .send({ parsed: result });
+    logger.info("Completed request successfully");
+    await cache.setBatchParsed(filesHash, useText, loadedConfig, result);
+    logger.debug("Uploaded batch parse results to cache");
+    return;
   } else {
     const result = await batchParse({
       files: fls,
       config: loadedConfig,
     });
-    logger.info("Completed request successfully");
-    return res
+    res
       .header("Content-Type", "application/json")
       .status(200)
       .send({ parsed: result });
+    logger.info("Completed request successfully");
+    await cache.setBatchParsed(filesHash, useText, loadedConfig, result);
+    logger.debug("Uploaded batch parse results to cache");
+    return;
   }
 });
 
@@ -249,11 +295,34 @@ app.post("/screenshots", upload.single("file"), async (req, res) => {
   if (config) {
     loadedConfig = JSON.parse(config);
   }
+
+  // Enrich the auto-instrumented HTTP span with file metadata.
+  trace.getActiveSpan()?.setAttributes({
+    "file.name": fl.originalname,
+    "file.size": fl.buffer.length,
+    "file.mimetype": fl.mimetype,
+    "file.pages_to_screenshot": loadedPages,
+  });
+
+  const cache = getCache();
+  const fileHash = getFileHash(fl);
+  const stored = await cache.getScreenshot(fileHash, loadedPages, loadedConfig);
+  if (stored) {
+    trace.getActiveSpan()?.setAttribute("cache.hit", "true");
+    cacheScreenshotHitsTotal.add(1);
+    logger.info("Returning cached screenshot result");
+    res.header("Content-Type", "application/json").status(200).send(stored);
+    return;
+  }
+  trace.getActiveSpan()?.setAttribute("cache.hit", "false");
+
   const result = await screenshot({
     file: fl,
     config: loadedConfig,
     pageNumbers: toScreenshot,
   });
+  await cache.setScreenshot(fileHash, loadedPages, loadedConfig, result);
+  logger.debug("Uploaded screenshot result to cache");
   res.setHeader("Content-Type", "application/x-ndjson");
   for (let i = 0; i < result.length; i++) {
     const { imageBuffer, pageNum, height, width } = result[i]!;

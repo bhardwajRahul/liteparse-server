@@ -30,11 +30,9 @@ class RateLimiterFactory {
       if (this.client) {
         return this.client;
       }
-      this.client = new Redis({
+      this.client = new Redis(this.uri, {
         enableOfflineQueue: true,
         password: this.password,
-        host: "0.0.0.0",
-        port: 6379,
       });
       this.client.on("error", (err) => {
         console.error("Redis error:", err);
