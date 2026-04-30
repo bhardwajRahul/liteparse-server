@@ -2,6 +2,8 @@
 
 An Express server that exposes [`@llamaindex/liteparse`](https://www.npmjs.com/package/@llamaindex/liteparse) as an HTTP parsing backend. It supports single-file parsing, batch parsing, and page screenshotting, with built-in rate limiting (Redis), distributed tracing (OpenTelemetry → Jaeger), and metrics (OpenTelemetry → Prometheus → Grafana).
 
+A **slim variant** (`src/slim.ts`) is also available — it exposes the same API surface with no caching and no observability instrumentation, making it ideal for lightweight deployments where Redis, the OTel Collector, and supporting services are not needed.
+
 ---
 
 ## Table of contents
@@ -12,6 +14,7 @@ An Express server that exposes [`@llamaindex/liteparse`](https://www.npmjs.com/p
 - [Running with Docker](#running-with-docker)
 - [Supporting services](#supporting-services)
 - [Caching](#caching)
+- [Slim server](#slim-server)
 - [API reference](#api-reference)
 - [Testing with the test script](#testing-with-the-test-script)
 
@@ -175,6 +178,36 @@ All three endpoints cache their results in Redis, keyed on a **SHA-256 hash of t
 Cache hits increment the corresponding OpenTelemetry counter metric (`liteparse.parse.cache_hits`, `liteparse.batch_parse.cache_hits`, `liteparse.screenshot.cache_hits`) and set a `cache.hit` span attribute (`"true"` / `"false"`) on the active trace span — both visible in Grafana and Jaeger respectively.
 
 The cache shares the same Redis instance used for rate limiting and is configured via the same `REDIS_URI` and `REDIS_PASSWORD` environment variables.
+
+---
+
+## Slim server
+
+`src/slim.ts` is a stripped-down variant of the server that removes all built-in caching and observability. It exposes the same three endpoints (`POST /parse`, `POST /batch/parse`, `POST /screenshots`) and keeps rate limiting and logging, but requires **no Redis caching/rate-limiting**, **no OpenTelemetry Collector**, and **no supporting metrics/tracing services**.
+
+### Running locally
+
+```bash
+bun run start-slim:bun
+# or with Node
+npm run start-slim:node
+```
+
+The server listens on **port 5000**.
+
+### Building and running with Docker
+
+The `slim.Dockerfile` produces a self-contained image with no observability dependencies:
+
+```bash
+# Build the image
+docker build -f slim.Dockerfile -t liteparse-server-slim .
+
+# Run it (supply Redis connection details via env vars)
+docker run -p 5000:5000 liteparse-server-slim
+```
+
+The API is then available at **http://localhost:5000**.
 
 ---
 

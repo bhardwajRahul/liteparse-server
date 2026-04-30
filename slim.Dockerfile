@@ -4,6 +4,7 @@ WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
+COPY slim-bunfig.toml ./bunfig.toml
 
 # Install dependencies
 RUN bun install
@@ -12,6 +13,8 @@ RUN bun install
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libvips42 \
     ca-certificates \
+    libreoffice \
+    imagemagick \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy source code
@@ -19,4 +22,4 @@ COPY . .
 
 EXPOSE 5000
 
-CMD ["bun", "run", "start:bun"]
+CMD ["bun", "run", "start-slim:bun"]
