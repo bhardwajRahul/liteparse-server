@@ -6,9 +6,8 @@ import {
 import { Mutex } from "async-mutex";
 import Redis from "ioredis";
 import crypto from "crypto";
-import { hash } from "bun";
 
-class RedisCache {
+export class RedisCache {
   private uri: string;
   private password: string;
   private mu: Mutex;

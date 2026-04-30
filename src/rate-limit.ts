@@ -2,6 +2,8 @@ import { Redis } from "ioredis";
 import { Mutex } from "async-mutex";
 import { RateLimiterRedis } from "rate-limiter-flexible";
 
+const RATE_LIMIT_PREFIX = "liteparse-server:ratelimit";
+
 class RateLimiterFactory {
   private client: Redis | undefined = undefined;
   private uri: string;
@@ -49,7 +51,7 @@ class RateLimiterFactory {
       const client = await this.getClient();
       this.limiter = new RateLimiterRedis({
         storeClient: client,
-        keyPrefix: "liteparse-server:ratelimit",
+        keyPrefix: RATE_LIMIT_PREFIX,
         points: 100,
         duration: 60,
       });
