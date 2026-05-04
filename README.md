@@ -2,14 +2,12 @@
 
 An Express server that exposes [`@llamaindex/liteparse`](https://www.npmjs.com/package/@llamaindex/liteparse) as an HTTP parsing backend. It supports single-file parsing, batch parsing, and page screenshotting. An example of how to use it with built-in rate limiting (Redis), distributed tracing (OpenTelemetry → Jaeger), and metrics (OpenTelemetry → Prometheus → Grafana) is available [here](./examples/docker-compose).
 
-
 ## Table of contents
 
 - [Requirements](#requirements)
 - [Minimal Server](#minimal-server)
 - [API Specification](#api-specification)
 - [Testing with the test script](#testing-with-the-test-script)
-
 
 ## Requirements
 
@@ -19,7 +17,7 @@ An Express server that exposes [`@llamaindex/liteparse`](https://www.npmjs.com/p
 
 ## Minimal Server
 
-`src/slim.ts` is a stripped-down variant of the server that removes all built-in caching, rate limiting and and observability. It exposes the same three endpoints (`POST /parse`, `POST /batch/parse`, `POST /screenshots`) and keeps rate limiting and logging, but requires **no Redis caching/rate-limiting**, **no OpenTelemetry Collector**, and **no supporting metrics/tracing services**.
+`src/slim.ts` is a minimal version of the liteparse server that removes all built-in caching, rate limiting and and observability. It exposes the same three endpoints (`POST /parse`, `POST /batch/parse`, `POST /screenshots`) and keeps rate limiting and logging, but requires **no Redis caching/rate-limiting**, **no OpenTelemetry Collector**, and **no supporting metrics/tracing services**.
 
 ### Running locally
 
@@ -38,17 +36,19 @@ The `slim.Dockerfile` produces a self-contained image with no observability depe
 ```bash
 # Build the image
 docker build -f slim.Dockerfile -t liteparse-server-slim .
-
-# Run it (supply Redis connection details via env vars)
+# Run exposing port 5000
 docker run -p 5000:5000 liteparse-server-slim
 ```
 
 The API is then available at **http://localhost:5000**.
 
+## Full Server Setup
+
+If you wish to leverage an all-in-one server setup, with **built-in observability, caching and rate-limiting**, you can follow [this guide](./examples/docker-compose/README.md).
+
 ## API Specification
 
 The full API specification is available [here](./API_SPEC.md)
-
 
 ## Testing with the test script
 

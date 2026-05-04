@@ -1,10 +1,12 @@
 dist/
 node_modules/
 data/
-grafana/
+examples/
 *.yaml
 .env
-README.md
+*.md
 scripts/
 LICENSE
 CONTRIBUTING.md
+__tests__/
+eng.traineddata

@@ -8,16 +8,16 @@ Parses a single document and returns either structured page data or plain text.
 
 **Form fields:**
 
-| Field    | Type   | Required | Description                                         |
-|----------|--------|----------|-----------------------------------------------------|
-| `file`   | file   | ✅        | The document to parse                               |
-| `config` | string | ❌        | JSON-serialized `LiteParseConfig` options           |
+| Field    | Type   | Required | Description                               |
+| -------- | ------ | -------- | ----------------------------------------- |
+| `file`   | file   | ✅       | The document to parse                     |
+| `config` | string | ❌       | JSON-serialized `LiteParseConfig` options |
 
 **Query parameters:**
 
-| Parameter | Type    | Default  | Description                                              |
-|-----------|---------|----------|----------------------------------------------------------|
-| `text`    | boolean | `false`  | If `true`, returns `text/plain`; otherwise `application/json` with a `pages` array |
+| Parameter | Type    | Default | Description                                                                        |
+| --------- | ------- | ------- | ---------------------------------------------------------------------------------- |
+| `text`    | boolean | `false` | If `true`, returns `text/plain`; otherwise `application/json` with a `pages` array |
 
 **Responses:**
 
@@ -34,16 +34,16 @@ Parses multiple documents in a single request.
 
 **Form fields:**
 
-| Field    | Type     | Required | Description                               |
-|----------|----------|----------|-------------------------------------------|
-| `files`  | file[]   | ✅        | One or more documents to parse            |
-| `config` | string   | ❌        | JSON-serialized `LiteParseConfig` options |
+| Field    | Type   | Required | Description                               |
+| -------- | ------ | -------- | ----------------------------------------- |
+| `files`  | file[] | ✅       | One or more documents to parse            |
+| `config` | string | ❌       | JSON-serialized `LiteParseConfig` options |
 
 **Query parameters:**
 
-| Parameter | Type    | Default  | Description                               |
-|-----------|---------|----------|-------------------------------------------|
-| `text`    | boolean | `false`  | If `true`, returns extracted text per file |
+| Parameter | Type    | Default | Description                                |
+| --------- | ------- | ------- | ------------------------------------------ |
+| `text`    | boolean | `false` | If `true`, returns extracted text per file |
 
 **Response `200 application/json`:**
 
@@ -65,18 +65,25 @@ Renders document pages as PNG images and streams them back as newline-delimited 
 **Form fields:**
 
 | Field    | Type   | Required | Description                               |
-|----------|--------|----------|-------------------------------------------|
-| `file`   | file   | ✅        | The document to screenshot                |
-| `config` | string | ❌        | JSON-serialized `LiteParseConfig` options |
+| -------- | ------ | -------- | ----------------------------------------- |
+| `file`   | file   | ✅       | The document to screenshot                |
+| `config` | string | ❌       | JSON-serialized `LiteParseConfig` options |
 
 **Query parameters:**
 
-| Parameter | Type   | Default | Description                                                        |
-|-----------|--------|---------|--------------------------------------------------------------------|
+| Parameter | Type   | Default | Description                                                       |
+| --------- | ------ | ------- | ----------------------------------------------------------------- |
 | `pages`   | string | all     | Comma-separated 1-based page numbers to screenshot (e.g. `1,2,3`) |
 
 **Response `200 application/x-ndjson`** — one JSON object per line:
 
 ```json
-{ "index": 0, "mimetype": "image/png", "data": "<base64>", "page_number": 1, "height": 1056, "width": 816 }
+{
+  "index": 0,
+  "mimetype": "image/png",
+  "data": "<base64>",
+  "page_number": 1,
+  "height": 1056,
+  "width": 816
+}
 ```
