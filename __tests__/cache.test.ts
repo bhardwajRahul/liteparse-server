@@ -1,12 +1,4 @@
-import {
-  vi,
-  describe,
-  it,
-  expect,
-  beforeEach,
-  afterAll,
-  afterEach,
-} from "vitest";
+import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
 import { RedisCache } from "../src/cache";
 import {
   LiteParseConfig,
@@ -26,6 +18,7 @@ vi.mock("ioredis", async () => {
 
         constructor(
           path: string,
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           _options: { enableOfflineQueue: boolean; password: string },
         ) {
           this.path = path;
@@ -40,6 +33,7 @@ vi.mock("ioredis", async () => {
           if (Date.now() - v.timestamp > v.ttl * 1000) return null;
           return v.value;
         });
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         on = vi.fn((_event: string, _callback: (err: unknown) => void) => {});
       },
     ),

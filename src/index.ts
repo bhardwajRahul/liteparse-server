@@ -175,6 +175,13 @@ app.post("/batch/parse", upload.array("files"), async (req, res) => {
   } else {
     fls = req.files;
   }
+  if (fls.length == 0) {
+    logger.error("No files provided under field `files`");
+    res.status(400).send({
+      detail: "No files provided under field `files`",
+    });
+    return;
+  }
   const { text } = req.query;
   const config = req.body.config as string | undefined;
   let loadedConfig: Partial<LiteParseConfig> | undefined = undefined;

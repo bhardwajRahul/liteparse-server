@@ -4,8 +4,7 @@ import { batchParse, parse, screenshot, SCREENSHOT_MIMETYPE } from "./utils";
 import type { LiteParseConfig, ParsedPage } from "@llamaindex/liteparse";
 import { PrefixedLogger } from "./logger";
 
-const port = 5000;
-const app = express();
+export const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
 
 /*
@@ -96,6 +95,13 @@ app.post("/batch/parse", upload.array("files"), async (req, res) => {
     fls = req.files["files"];
   } else {
     fls = req.files;
+  }
+  if (fls.length == 0) {
+    logger.error("No files provided under field `files`");
+    res.status(400).send({
+      detail: "No files provided under field `files`",
+    });
+    return;
   }
   const { text } = req.query;
   const config = req.body.config as string | undefined;
@@ -206,8 +212,4 @@ app.post("/screenshots", upload.single("file"), async (req, res) => {
 
   res.end();
   logger.info(`Successfully sent ${result.length} screenshots as a response`);
-});
-
-app.listen(port, () => {
-  console.log(`App listening on port ${port}`);
 });

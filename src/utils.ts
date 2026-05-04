@@ -211,7 +211,7 @@ export async function screenshot({
 
     const fileName = path.join(
       os.tmpdir(),
-      `${randomUUID}.${path.extname(file.originalname)}`,
+      `${randomUUID().toString()}.${path.extname(file.originalname)}`,
     );
     try {
       await writeFile(fileName, file.buffer);
@@ -240,6 +240,7 @@ export async function screenshot({
       span.recordException(err as Error);
       span.setStatus({ code: SpanStatusCode.ERROR });
       span.end();
+      logger.error(`An error occurred: ${err}`);
       throw err;
     } finally {
       await unlink(fileName);
