@@ -1,6 +1,6 @@
 import express from "express";
 import multer from "multer";
-import { batchParse, parse, screenshot, SCREENSHOT_MIMETYPE } from "./utils";
+import { parse, screenshot, SCREENSHOT_MIMETYPE } from "./utils";
 import type { LiteParseConfig, ParsedPage } from "@llamaindex/liteparse";
 import { PrefixedLogger } from "./logger";
 
@@ -58,86 +58,6 @@ app.post("/parse", upload.single("file"), async (req, res) => {
       .header("Content-Type", "application/json")
       .status(200)
       .send({ pages: result });
-    logger.info("Completed request successfully");
-    return;
-  }
-});
-
-/*
-This endpoint looks for the following fields in form data:
-- 'files': containing data for multiple files
-- 'config': serialized config for LiteParse
-Moreover, it takes an optional `text` query parameter that
-defines whether the response will contain parsed text or parsed pages objects.
-*/
-app.post("/batch/parse", upload.array("files"), async (req, res) => {
-  const logger = new PrefixedLogger("[POST /batch/parse]");
-  logger.info("Received request");
-  if (!req.files) {
-    logger.error("No `files` provided");
-    res.status(400).send({
-      detail: "You need to provide one or more files in the `files` field",
-    });
-    return;
-  }
-  let fls: Express.Multer.File[];
-  if (!Array.isArray(req.files)) {
-    if (!req.files["files"]) {
-      logger.error(
-        "Could not find any `files` field in the current formData setup",
-      );
-      res.status(400).send({
-        detail:
-          "Could not find any `files` field in the current formData setup",
-      });
-      return;
-    }
-    fls = req.files["files"];
-  } else {
-    fls = req.files;
-  }
-  if (fls.length == 0) {
-    logger.error("No files provided under field `files`");
-    res.status(400).send({
-      detail: "No files provided under field `files`",
-    });
-    return;
-  }
-  const { text } = req.query;
-  const config = req.body.config as string | undefined;
-  let loadedConfig: Partial<LiteParseConfig> | undefined = undefined;
-  if (config) {
-    loadedConfig = JSON.parse(config);
-  }
-  const useText =
-    text && !Array.isArray(text)
-      ? text.toString().toLowerCase() === "true"
-      : false;
-  logger.debug(
-    `text = ${useText ? "true" : "false"}; config = ${loadedConfig ? "set" : "unset"}`,
-  );
-
-  if (useText) {
-    const result = await batchParse({
-      files: fls,
-      text: useText,
-      config: loadedConfig,
-    });
-    res
-      .header("Content-Type", "application/json")
-      .status(200)
-      .send({ parsed: result });
-    logger.info("Completed request successfully");
-    return;
-  } else {
-    const result = await batchParse({
-      files: fls,
-      config: loadedConfig,
-    });
-    res
-      .header("Content-Type", "application/json")
-      .status(200)
-      .send({ parsed: result });
     logger.info("Completed request successfully");
     return;
   }

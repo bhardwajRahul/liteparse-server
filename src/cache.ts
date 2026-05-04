@@ -158,15 +158,6 @@ export function getFileHash(file: Express.Multer.File) {
   return crypto.createHash("sha256").update(file.buffer).digest("hex");
 }
 
-export function getFilesHash(files: Express.Multer.File[]) {
-  const hashes = [];
-  for (const file of files) {
-    const hash = crypto.createHash("sha256").update(file.buffer).digest("hex");
-    hashes.push(hash);
-  }
-  return crypto.createHash("sha256").update(hashes.join("")).digest("hex");
-}
-
 let cache: RedisCache | undefined = undefined;
 
 export function getCache() {

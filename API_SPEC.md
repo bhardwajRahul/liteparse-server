@@ -28,36 +28,6 @@ Parses a single document and returns either structured page data or plain text.
 
 ---
 
-### `POST /batch/parse` — parse multiple files
-
-Parses multiple documents in a single request.
-
-**Form fields:**
-
-| Field    | Type   | Required | Description                               |
-| -------- | ------ | -------- | ----------------------------------------- |
-| `files`  | file[] | ✅       | One or more documents to parse            |
-| `config` | string | ❌       | JSON-serialized `LiteParseConfig` options |
-
-**Query parameters:**
-
-| Parameter | Type    | Default | Description                                |
-| --------- | ------- | ------- | ------------------------------------------ |
-| `text`    | boolean | `false` | If `true`, returns extracted text per file |
-
-**Response `200 application/json`:**
-
-```json
-{
-  "parsed": [
-    { "file_name": "doc.pdf", "pages": [...] },
-    { "file_name": "doc.pdf", "text": "..." }
-  ]
-}
-```
-
----
-
 ### `POST /screenshots` — screenshot pages of a document
 
 Renders document pages as PNG images and streams them back as newline-delimited JSON (NDJSON).

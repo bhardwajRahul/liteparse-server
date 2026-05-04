@@ -1,6 +1,6 @@
 # liteparse-server
 
-An Express server that exposes [`@llamaindex/liteparse`](https://www.npmjs.com/package/@llamaindex/liteparse) as an HTTP parsing backend. It supports single-file parsing, batch parsing, and page screenshotting. An example of how to use it with built-in rate limiting (Redis), distributed tracing (OpenTelemetry → Jaeger), and metrics (OpenTelemetry → Prometheus → Grafana) is available [here](./examples/docker-compose).
+An Express server that exposes [`@llamaindex/liteparse`](https://www.npmjs.com/package/@llamaindex/liteparse) as an HTTP parsing backend. It supports single-file parsing and page screenshotting. An example of how to use it with built-in rate limiting (Redis), distributed tracing (OpenTelemetry → Jaeger), and metrics (OpenTelemetry → Prometheus → Grafana) is available [here](./examples/docker-compose).
 
 ## Table of contents
 
@@ -17,7 +17,7 @@ An Express server that exposes [`@llamaindex/liteparse`](https://www.npmjs.com/p
 
 ## Minimal Server
 
-`src/slim.ts` is a minimal version of the liteparse server that removes all built-in caching, rate limiting and and observability. It exposes the same three endpoints (`POST /parse`, `POST /batch/parse`, `POST /screenshots`) and keeps rate limiting and logging, but requires **no Redis caching/rate-limiting**, **no OpenTelemetry Collector**, and **no supporting metrics/tracing services**.
+`src/slim.ts` is a minimal version of the liteparse server that removes all built-in caching, rate limiting and and observability. It exposes the same two endpoints (`POST /parse`, `POST /screenshots`) and keeps rate limiting and logging, but requires **no Redis caching/rate-limiting**, **no OpenTelemetry Collector**, and **no supporting metrics/tracing services**.
 
 ### Running locally
 
@@ -78,18 +78,6 @@ Or, if `uv` is available, run it directly:
 
 ```bash
 ./scripts/server-test.py file path/to/document.pdf text
-```
-
-#### Batch parse all files in a directory
-
-```bash
-./scripts/server-test.py dir path/to/directory/
-```
-
-#### Batch parse with plain text output
-
-```bash
-./scripts/server-test.py dir path/to/directory/ text
 ```
 
 #### Screenshot pages of a document

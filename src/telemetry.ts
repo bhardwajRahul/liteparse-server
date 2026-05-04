@@ -36,14 +36,6 @@ export const parseErrorsTotal = meter.createCounter(
   { description: "Total number of parse errors" },
 );
 
-// --- Batch metrics ---
-
-/** Number of files submitted per batch parse request. */
-export const batchFilesSubmitted = meter.createHistogram(
-  "liteparse.screenshot.files_submitted",
-  { description: "Number of files submitted per batch parse request" },
-);
-
 // --- Screenshot metrics ---
 
 /** Time to parse a single file, in milliseconds. */
@@ -102,12 +94,6 @@ export const httpRateLimitedTotal = meter.createCounter(
 export const cacheParseHitsTotal = meter.createCounter(
   "liteparse.parse.cache_hits",
   { description: "Total number of cache hits for parse" },
-);
-
-/** Total number of cache hits for parse workloads (incremented per hit). */
-export const cacheBatchParseHitsTotal = meter.createCounter(
-  "liteparse.batch_parse.cache_hits",
-  { description: "Total number of cache hits for batchParse" },
 );
 
 /** Total number of cache hits for parse workloads (incremented per hit). */

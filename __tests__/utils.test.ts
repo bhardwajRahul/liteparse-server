@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parse } from "../src/utils";
+import { parse, screenshot } from "../src/utils";
 import { readFile } from "fs/promises";
 import path from "path";
 import Stream from "stream";
@@ -215,5 +215,56 @@ describe("Test parse", () => {
     expect(
       (result as string).includes(SAMPLE_DOCX_EXPECTED_PART_CONTENT_2),
     ).toBe(true);
+  });
+});
+
+describe("Test screenshot", () => {
+  it("Test screenshot PDF file (all pages, no config)", async () => {
+    const file = await toMulterFile(PDF_FILE_PATH, "application/pdf");
+    const result = await screenshot({ file });
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBe(2); // PDF has two pages
+    for (let i = 0; i < result.length; i++) {
+      expect(result[i]?.pageNum).toBe(i + 1);
+      expect(Buffer.isBuffer(result[i]?.imageBuffer)).toBe(true);
+      expect(result[i]?.imageBuffer.length).toBeGreaterThan(0);
+      expect(typeof result[i]?.width).toBe("number");
+      expect(result[i]?.width).toBeGreaterThan(0);
+      expect(typeof result[i]?.height).toBe("number");
+      expect(result[i]?.height).toBeGreaterThan(0);
+    }
+  });
+
+  it("Test screenshot PDF file (specific page)", async () => {
+    const file = await toMulterFile(PDF_FILE_PATH, "application/pdf");
+    const result = await screenshot({ file, pageNumbers: [1] });
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBe(1);
+    expect(result[0]?.pageNum).toBe(1);
+    expect(Buffer.isBuffer(result[0]?.imageBuffer)).toBe(true);
+    expect(result[0]?.imageBuffer.length).toBeGreaterThan(0);
+  });
+
+  it("Test screenshot PDF file (multiple specific pages)", async () => {
+    const file = await toMulterFile(PDF_FILE_PATH, "application/pdf");
+    const result = await screenshot({ file, pageNumbers: [1, 2] });
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBe(2);
+    expect(result[0]?.pageNum).toBe(1);
+    expect(result[1]?.pageNum).toBe(2);
+  });
+
+  it("Test screenshot PNG file (all pages, no config)", async () => {
+    const file = await toMulterFile(PNG_FILE_PATH, "image/png");
+    const result = await screenshot({ file });
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBe(1); // receipt is one page
+    expect(result[0]?.pageNum).toBe(1);
+    expect(Buffer.isBuffer(result[0]?.imageBuffer)).toBe(true);
+    expect(result[0]?.imageBuffer.length).toBeGreaterThan(0);
+    expect(typeof result[0]?.width).toBe("number");
+    expect(result[0]?.width).toBeGreaterThan(0);
+    expect(typeof result[0]?.height).toBe("number");
+    expect(result[0]?.height).toBeGreaterThan(0);
   });
 });
