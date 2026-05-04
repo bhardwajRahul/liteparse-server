@@ -8,7 +8,6 @@
 
 import base64
 import json
-import os
 import sys
 from pathlib import Path
 
@@ -65,27 +64,6 @@ def screenshot_req(file: str, pages: str | None, output_dir: str = ".") -> None:
                         print(f"Saved {out_file}")
 
 
-def multiple_file_req(directory: str, text: bool) -> None:
-    with httpx.Client(timeout=60) as client:
-        fls = [
-            ("files", open(os.path.join(directory, f), "rb"))
-            for f in os.listdir(directory)
-        ]
-        response = client.post(
-            "http://localhost:5000/batch/parse",
-            params={"text": "true" if text else "false"},
-            files=fls,
-        )
-        response.raise_for_status()
-        txt = response.content.decode("utf-8")
-    print("RESPONSE")
-    try:
-        t = json.loads(txt)
-        print(json.dumps(t, indent=2))
-    except Exception:
-        print(txt)
-
-
 if __name__ == "__main__":
     if len(sys.argv) < 3:
         print(
@@ -101,10 +79,5 @@ if __name__ == "__main__":
         if len(sys.argv) >= 4 and sys.argv[3].startswith("pages="):
             pages = sys.argv[3].removeprefix("pages=")
         screenshot_req(sys.argv[2], pages)
-    elif sys.argv[1] == "dir":
-        text = False
-        if len(sys.argv) >= 4 and sys.argv[3] == "text":
-            text = True
-        multiple_file_req(sys.argv[2], text)
     else:
         print(f"Unrecognized command: {sys.argv[1]}")

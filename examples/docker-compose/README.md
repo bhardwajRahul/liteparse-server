@@ -162,9 +162,8 @@ All three endpoints cache their results in Redis, keyed on a **SHA-256 hash of t
 | Endpoint            | Redis key prefix | TTL      |
 | ------------------- | ---------------- | -------- |
 | `POST /parse`       | `parse:`         | 1 hour   |
-| `POST /batch/parse` | `batch_parse:`   | 12 hours |
 | `POST /screenshots` | `screenshot:`    | 24 hours |
 
-Cache hits increment the corresponding OpenTelemetry counter metric (`liteparse.parse.cache_hits`, `liteparse.batch_parse.cache_hits`, `liteparse.screenshot.cache_hits`) and set a `cache.hit` span attribute (`"true"` / `"false"`) on the active trace span — both visible in Grafana and Jaeger respectively.
+Cache hits increment the corresponding OpenTelemetry counter metric (`liteparse.parse.cache_hits`, `liteparse.screenshot.cache_hits`) and set a `cache.hit` span attribute (`"true"` / `"false"`) on the active trace span — both visible in Grafana and Jaeger respectively.
 
 The cache shares the same Redis instance used for rate limiting and is configured via the same `REDIS_URI` and `REDIS_PASSWORD` environment variables.
