@@ -14,10 +14,6 @@ import {
   screenFilesTotal,
   screenFileSizeBytes,
 } from "./telemetry";
-import { writeFile, unlink } from "fs/promises";
-import { randomUUID } from "crypto";
-import path from "path";
-import os from "os";
 
 export const SCREENSHOT_MIMETYPE = "image/png";
 
@@ -107,14 +103,9 @@ export async function screenshot({
     const lit = new LiteParse(config);
     logger.debug(`Starting to screenshot: ${file.originalname}`);
 
-    const fileName = path.join(
-      os.tmpdir(),
-      `${randomUUID().toString()}.${path.extname(file.originalname)}`,
-    );
     try {
-      await writeFile(fileName, file.buffer);
       const startTime = performance.now();
-      const result = await lit.screenshot(fileName, pageNumbers, true);
+      const result = await lit.screenshot(file.buffer, pageNumbers, true);
       const duration = performance.now() - startTime;
 
       screenDurationMs.record(duration);
@@ -140,8 +131,6 @@ export async function screenshot({
       span.end();
       logger.error(`An error occurred: ${err}`);
       throw err;
-    } finally {
-      await unlink(fileName);
     }
   });
 }
