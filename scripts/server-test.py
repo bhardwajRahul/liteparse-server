@@ -19,7 +19,7 @@ def single_file_req(file: str, text: bool) -> None:
         with open(file, "rb") as f:
             files = {"file": f}
             response = client.post(
-                "http://localhost:5000/parse",
+                "http://localhost:5707/parse",
                 params={"text": "true" if text else "false"},
                 files=files,
             )
@@ -41,7 +41,7 @@ def screenshot_req(file: str, pages: str | None, output_dir: str = ".") -> None:
         with open(file, "rb") as f:
             with client.stream(
                 "POST",
-                "http://localhost:5000/screenshots",
+                "http://localhost:5707/screenshots",
                 params={"pages": pages} if pages else {},
                 files={"file": f},
             ) as response:

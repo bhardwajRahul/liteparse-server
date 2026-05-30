@@ -27,7 +27,7 @@ bun run start-slim:bun
 npm run start-slim:node
 ```
 
-The server listens on **port 5000**.
+The server listens on **port 5707**.
 
 ### Building and running with Docker
 
@@ -36,11 +36,11 @@ The `slim.Dockerfile` produces a self-contained image with no observability depe
 ```bash
 # Build the image
 docker build -f slim.Dockerfile -t liteparse-server-slim .
-# Run exposing port 5000
-docker run -p 5000:5000 liteparse-server-slim
+# Run exposing port 5707
+docker run -p 5707:5707 liteparse-server-slim
 ```
 
-The API is then available at **http://localhost:5000**.
+The API is then available at **http://localhost:5707**.
 
 ## Full Server Setup
 
