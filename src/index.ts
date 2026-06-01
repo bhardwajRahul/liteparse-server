@@ -14,7 +14,7 @@ import {
 } from "./telemetry";
 import { getCache, getFileHash } from "./cache";
 
-const port = 5000;
+const port = 5707;
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
 

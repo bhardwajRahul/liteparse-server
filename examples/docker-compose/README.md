@@ -54,7 +54,7 @@ docker compose up -d
 bun --preload ./src/instrumentation.ts src/index.ts
 ```
 
-The server listens on **port 5000**.
+The server listens on **port 5707**.
 
 ---
 
@@ -85,7 +85,7 @@ The `--build` flag rebuilds the `liteparse-server` image from the local `Dockerf
 docker compose ps
 ```
 
-The API server will be available at **http://localhost:5000**, and all supporting service UIs remain on their usual ports (Jaeger: 16686, Prometheus: 9090, Grafana: 3000).
+The API server will be available at **http://localhost:5707**, and all supporting service UIs remain on their usual ports (Jaeger: 16686, Prometheus: 9090, Grafana: 3000).
 
 ### Stopping the stack
 

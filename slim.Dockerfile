@@ -20,6 +20,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy source code
 COPY . .
 
-EXPOSE 5000
+EXPOSE 5707
 
 CMD ["bun", "run", "start-slim:bun"]

@@ -6,7 +6,7 @@ services:
       dockerfile: Dockerfile
     container_name: liteparse-server
     ports:
-      - 5000:5000
+      - 5707:5707
       - 9464:9464
     environment:
       REDIS_URI: ${REDIS_URI}
