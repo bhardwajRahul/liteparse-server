@@ -68,6 +68,41 @@ export const screenErrorsTotal = meter.createCounter(
   { description: "Total number of screenshot errors" },
 );
 
+// --- isComplex metrics ---
+
+/** Time to parse a single file, in milliseconds. */
+export const isComplexDurationMs = meter.createHistogram(
+  "liteparse.isComplex.duration_ms",
+  { description: "Time to infer complexity for a single file", unit: "ms" },
+);
+
+/** Size of each file submitted for parsing, in bytes. */
+export const isComplexFileSizeBytes = meter.createHistogram(
+  "liteparse.isComplex.file_size_bytes",
+  {
+    description: "Size of files submitted for complexity estimation",
+    unit: "By",
+  },
+);
+
+/** Number of pages in each successfully parsed file. */
+export const isComplexPagesCount = meter.createHistogram(
+  "liteparse.isComplex.pages_count",
+  { description: "Number of pages for which complexity was inferred" },
+);
+
+/** Total number of files parsed (incremented per file). */
+export const isComplexFilesTotal = meter.createCounter(
+  "liteparse.isComplex.files_total",
+  { description: "Total number of files for which complexity was inferred" },
+);
+
+/** Total number of parse errors. */
+export const isComplexErrorsTotal = meter.createCounter(
+  "liteparse.isComplex.errors_total",
+  { description: "Total number of errors in complexity estimation" },
+);
+
 // --- HTTP metrics ---
 
 /** Total HTTP requests, labelled by route and response status. */

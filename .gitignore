@@ -2,3 +2,4 @@ node_modules/
 dist/
 .env
 eng.traineddata
+.DS_Store
