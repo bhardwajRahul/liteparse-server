@@ -284,7 +284,7 @@ app.post("/is-complex", upload.single("file"), async (req, res) => {
   if (stored) {
     trace.getActiveSpan()?.setAttribute("cache.hit", "true");
     cacheScreenshotHitsTotal.add(1);
-    logger.info("Returning cached screenshot result");
+    logger.info("Returning cached isComplex result");
     res
       .header("Content-Type", "application/json")
       .status(200)
