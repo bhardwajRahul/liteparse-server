@@ -15,10 +15,10 @@ Parses a single document and returns either structured page data or plain text.
 
 **Query parameters:**
 
-| Parameter     | Type        | Default | Description                                                                        |
-| ------------- | ----------- | ------- | ---------------------------------------------------------------------------------- |
-| `text`        | boolean     | `false` | If `true`, returns `text/plain`; otherwise `application/json` with a `pages` array |
-| `markdown`    | boolean     | `false` | If `true`, returns `text/plain` (markdown formatted); otherwise `application/json` with a `pages` array |
+| Parameter  | Type    | Default | Description                                                                                             |
+| ---------- | ------- | ------- | ------------------------------------------------------------------------------------------------------- |
+| `text`     | boolean | `false` | If `true`, returns `text/plain`; otherwise `application/json` with a `pages` array                      |
+| `markdown` | boolean | `false` | If `true`, returns `text/plain` (markdown formatted); otherwise `application/json` with a `pages` array |
 
 **Responses:**
 
@@ -72,7 +72,6 @@ Estimates the complexity of a file based on text disposition, presence of images
 | `file`   | file   | ✅       | The document to screenshot                |
 | `config` | string | ❌       | JSON-serialized `LiteParseConfig` options |
 
-
 **Response `200 application/json`** — one JSON object containing an array of per-page complexity stats:
 
 ```json
@@ -90,9 +89,7 @@ Estimates the complexity of a file based on text disposition, presence of images
       "isGarbled": false,
       "pageArea": 484704,
       "needsOcr": true,
-      "reasons": [
-        "sparse-text"
-      ]
+      "reasons": ["sparse-text"]
     },
     {
       "pageNumber": 2,
@@ -106,9 +103,7 @@ Estimates the complexity of a file based on text disposition, presence of images
       "isGarbled": false,
       "pageArea": 484704,
       "needsOcr": true,
-      "reasons": [
-        "sparse-text"
-      ]
+      "reasons": ["sparse-text"]
     }
   ]
 }
