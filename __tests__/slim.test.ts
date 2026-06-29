@@ -1,7 +1,11 @@
 import request from "supertest";
 import { describe, it, expect } from "vitest";
 import { app } from "../src/slim";
-import { LiteParseConfig, ParsedPage } from "@llamaindex/liteparse";
+import {
+  LiteParseConfig,
+  PageComplexityStats,
+  ParsedPage,
+} from "@llamaindex/liteparse";
 
 const PE_DEAL_EXAMPLES_EXPECTED_PART_CONTENT_1 = "AlphaFlex Packaging Group";
 const PE_DEAL_EXAMPLES_EXPECTED_PART_CONTENT_2 = "Veridian Health Technologies";
@@ -186,6 +190,71 @@ describe("POST /screenshots", () => {
   it("/screenshots: bad field", async () => {
     const res = await request(app)
       .post("/screenshots")
+      .field("fil", "./data/pe_deal_examples.pdf")
+      .expect(400);
+    const body = res.body;
+    if (typeof body === "string") {
+      expect(
+        body.includes("You need to provide a file in the `file` field"),
+      ).toBe(true);
+    } else {
+      const b = body as { detail: string };
+      expect(b.detail).toBe("You need to provide a file in the `file` field");
+    }
+  });
+});
+
+describe("POST /is-complex", () => {
+  it("/is-complex: no config", async () => {
+    const res = await request(app)
+      .post("/is-complex")
+      .attach("file", "./data/pe_deal_examples.pdf")
+      .expect(200);
+    const contentType = res.headers["content-type"];
+    expect(contentType).toBeDefined();
+    expect(contentType!.includes("application/json")).toBe(true);
+    let body: { pages: PageComplexityStats[] };
+    if (typeof res.body === "string") {
+      body = JSON.parse(res.body);
+    } else {
+      body = res.body;
+    }
+    expect(Array.isArray(body.pages)).toBe(true);
+    expect(body.pages.length).toBe(2); // PDF has 2 pages
+    for (let i = 0; i < body.pages.length; i++) {
+      const stats = body.pages[i]!;
+      expect(stats.pageNumber).toBe(i + 1);
+      expect(typeof stats.textLength).toBe("number");
+      expect(typeof stats.textCoverage).toBe("number");
+      expect(typeof stats.imageCoverage).toBe("number");
+      expect(typeof stats.needsOcr).toBe("boolean");
+      expect(Array.isArray(stats.reasons)).toBe(true);
+    }
+  });
+
+  it("/is-complex: w/config", async () => {
+    const res = await request(app)
+      .post("/is-complex")
+      .field("config", JSON.stringify(LITEPARSE_CONFIG_TARGET))
+      .attach("file", "./data/pe_deal_examples.pdf")
+      .expect(200);
+    const contentType = res.headers["content-type"];
+    expect(contentType).toBeDefined();
+    expect(contentType!.includes("application/json")).toBe(true);
+    let body: { pages: PageComplexityStats[] };
+    if (typeof res.body === "string") {
+      body = JSON.parse(res.body);
+    } else {
+      body = res.body;
+    }
+    expect(Array.isArray(body.pages)).toBe(true);
+    expect(body.pages.length).toBe(1); // only one targeted page
+    expect(body.pages[0]?.pageNumber).toBe(1);
+  });
+
+  it("/is-complex: bad field", async () => {
+    const res = await request(app)
+      .post("/is-complex")
       .field("fil", "./data/pe_deal_examples.pdf")
       .expect(400);
     const body = res.body;
