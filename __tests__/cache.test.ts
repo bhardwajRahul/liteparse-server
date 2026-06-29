@@ -2,6 +2,7 @@ import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
 import { RedisCache } from "../src/cache";
 import {
   LiteParseConfig,
+  PageComplexityStats,
   ParsedPage,
   ScreenshotResult,
 } from "@llamaindex/liteparse";
@@ -47,18 +48,42 @@ const PARSED_PAGES: ParsedPage[] = [
   { pageNum: 3, text: "salut", textItems: [], width: 130, height: 180 },
 ];
 const PARSED_TEXT = "hello\nbye\nsalut";
-const BATCH_PAGES: { file_name: string; pages: ParsedPage[] }[] = [
-  { file_name: "test.pdf", pages: PARSED_PAGES },
-  { file_name: "test_1.pdf", pages: PARSED_PAGES.slice(1) },
-];
-const BATCH_TEXT: { file_name: string; text: string }[] = [
-  { file_name: "test.pdf", text: PARSED_TEXT },
-  { file_name: "test_1.pdf", text: PARSED_TEXT.replace("hello\n", "") },
-];
+
 const SCREENSHOTS: ScreenshotResult[] = [
   { imageBuffer: Buffer.from([0, 1, 2]), pageNum: 1, width: 100, height: 200 },
   { imageBuffer: Buffer.from([3, 4, 5]), pageNum: 2, width: 150, height: 250 },
   { imageBuffer: Buffer.from([6, 7, 8]), pageNum: 3, width: 130, height: 180 },
+];
+
+const COMPLEXITY: PageComplexityStats[] = [
+  {
+    pageNumber: 1,
+    textLength: 1000,
+    textCoverage: 0.8,
+    hasSubstantialImages: false,
+    imageBlockCount: 0,
+    imageCoverage: 0,
+    largestImageCoverage: 0,
+    fullPageImage: false,
+    isGarbled: false,
+    pageArea: 612 * 792,
+    needsOcr: false,
+    reasons: [],
+  },
+  {
+    pageNumber: 2,
+    textLength: 0,
+    textCoverage: 0,
+    hasSubstantialImages: true,
+    imageBlockCount: 1,
+    imageCoverage: 0.95,
+    largestImageCoverage: 0.95,
+    fullPageImage: true,
+    isGarbled: false,
+    pageArea: 612 * 792,
+    needsOcr: true,
+    reasons: ["scanned"],
+  },
 ];
 
 const originalUri = process.env.REDIS_URI;
@@ -85,140 +110,89 @@ afterEach(() => {
 describe("Test caching for parsed content", () => {
   it("Test with pages, no config", async () => {
     const cache = new RedisCache();
-    await cache.setParsed(HASH, false, undefined, PARSED_PAGES);
-    const parsed = await cache.getParsed(HASH, false, undefined);
+    await cache.setParsed(HASH, false, false, undefined, PARSED_PAGES);
+    const parsed = await cache.getParsed(HASH, false, false, undefined);
     expect(parsed).toBeTruthy();
     expect(Array.isArray(parsed)).toBe(true);
     expect(parsed).toStrictEqual(PARSED_PAGES);
-    const noText = await cache.getParsed(HASH, true, undefined);
+    const noText = await cache.getParsed(HASH, true, false, undefined);
     expect(noText).toBeNull();
-    const noConf = await cache.getParsed(HASH, false, { dpi: 180 });
+    const noConf = await cache.getParsed(HASH, false, false, { dpi: 180 });
     expect(noConf).toBeNull();
-    // demonstrate that there is no leaking from parsed to batch-parsed
-    const noBatchParsed = await cache.getBatchParsed(HASH, false, undefined);
-    expect(noBatchParsed).toBeNull();
   });
 
   it("Test with pages, w/config", async () => {
     const cache = new RedisCache();
     const config: Partial<LiteParseConfig> = { targetPages: "1", dpi: 180 };
-    await cache.setParsed(HASH, false, config, PARSED_PAGES);
-    const parsed = await cache.getParsed(HASH, false, config);
+    await cache.setParsed(HASH, false, false, config, PARSED_PAGES);
+    const parsed = await cache.getParsed(HASH, false, false, config);
     expect(parsed).toBeTruthy();
     expect(Array.isArray(parsed)).toBe(true);
     expect(parsed).toStrictEqual(PARSED_PAGES);
-    const noText = await cache.getParsed(HASH, true, undefined);
+    const noText = await cache.getParsed(HASH, true, false, undefined);
     expect(noText).toBeNull();
-    const diffConf = await cache.getParsed(HASH, false, { dpi: 180 });
+    const diffConf = await cache.getParsed(HASH, false, false, { dpi: 180 });
     expect(diffConf).toBeNull();
-    const noConf = await cache.getParsed(HASH, false, undefined);
+    const noConf = await cache.getParsed(HASH, false, false, undefined);
     expect(noConf).toBeNull();
-    // demonstrate that there is no leaking from parsed to batch-parsed
-    const noBatchParsed = await cache.getBatchParsed(HASH, false, config);
-    expect(noBatchParsed).toBeNull();
   });
 
   it("Test with text, no config", async () => {
     const cache = new RedisCache();
-    await cache.setParsed(HASH, true, undefined, PARSED_TEXT);
-    const parsed = await cache.getParsed(HASH, true, undefined);
+    await cache.setParsed(HASH, true, false, undefined, PARSED_TEXT);
+    const parsed = await cache.getParsed(HASH, true, false, undefined);
     expect(parsed).toBeTruthy();
     expect(typeof parsed === "string").toBe(true);
     expect(parsed).toBe(PARSED_TEXT);
-    const noText = await cache.getParsed(HASH, false, undefined);
+    const noText = await cache.getParsed(HASH, false, false, undefined);
     expect(noText).toBeNull();
-    const noConf = await cache.getParsed(HASH, true, { dpi: 180 });
+    const noConf = await cache.getParsed(HASH, true, false, { dpi: 180 });
     expect(noConf).toBeNull();
-    // demonstrate that there is no leaking from parsed to batch-parsed
-    const noBatchParsed = await cache.getBatchParsed(HASH, true, undefined);
-    expect(noBatchParsed).toBeNull();
   });
 
   it("Test with text, w/config", async () => {
     const cache = new RedisCache();
     const config: Partial<LiteParseConfig> = { targetPages: "1", dpi: 180 };
-    await cache.setParsed(HASH, true, config, PARSED_TEXT);
-    const parsed = await cache.getParsed(HASH, true, config);
+    await cache.setParsed(HASH, true, false, config, PARSED_TEXT);
+    const parsed = await cache.getParsed(HASH, true, false, config);
     expect(parsed).toBeTruthy();
     expect(typeof parsed === "string").toBe(true);
     expect(parsed).toBe(PARSED_TEXT);
-    const noText = await cache.getParsed(HASH, false, undefined);
+    const noText = await cache.getParsed(HASH, false, false, undefined);
     expect(noText).toBeNull();
-    const diffConf = await cache.getParsed(HASH, true, { dpi: 180 });
+    const diffConf = await cache.getParsed(HASH, true, false, { dpi: 180 });
     expect(diffConf).toBeNull();
-    const noConf = await cache.getParsed(HASH, true, undefined);
+    const noConf = await cache.getParsed(HASH, true, false, undefined);
     expect(noConf).toBeNull();
-    // demonstrate that there is no leaking from parsed to batch-parsed
-    const noBatchParsed = await cache.getBatchParsed(HASH, true, config);
-    expect(noBatchParsed).toBeNull();
   });
-});
 
-describe("Test caching for batch-parsed content", () => {
-  it("Test with pages, no config", async () => {
+  it("Test with markdown, no config", async () => {
     const cache = new RedisCache();
-    await cache.setBatchParsed(HASH, false, undefined, BATCH_PAGES);
-    const parsed = await cache.getBatchParsed(HASH, false, undefined);
+    await cache.setParsed(HASH, false, true, undefined, PARSED_TEXT);
+    const parsed = await cache.getParsed(HASH, false, true, undefined);
     expect(parsed).toBeTruthy();
-    expect(parsed).toStrictEqual(BATCH_PAGES);
-    const noText = await cache.getBatchParsed(HASH, true, undefined);
-    expect(noText).toBeNull();
-    const noConf = await cache.getBatchParsed(HASH, false, { dpi: 180 });
+    expect(typeof parsed === "string").toBe(true);
+    expect(parsed).toBe(PARSED_TEXT);
+    const noMd = await cache.getParsed(HASH, true, false, undefined);
+    expect(noMd).toBeNull();
+    const noConf = await cache.getParsed(HASH, false, true, { dpi: 180 });
     expect(noConf).toBeNull();
-    // demonstrate that there is no leaking from batch-parsed to parsed
-    const noParsed = await cache.getParsed(HASH, false, undefined);
-    expect(noParsed).toBeNull();
   });
 
-  it("Test with pages, w/config", async () => {
+  it("Test with markdown, w/config", async () => {
     const cache = new RedisCache();
     const config: Partial<LiteParseConfig> = { targetPages: "1", dpi: 180 };
-    await cache.setBatchParsed(HASH, false, config, BATCH_PAGES);
-    const parsed = await cache.getBatchParsed(HASH, false, config);
+    await cache.setParsed(HASH, false, true, config, PARSED_TEXT);
+    const parsed = await cache.getParsed(HASH, false, true, config);
     expect(parsed).toBeTruthy();
-    expect(parsed).toStrictEqual(BATCH_PAGES);
-    const noText = await cache.getBatchParsed(HASH, true, undefined);
-    expect(noText).toBeNull();
-    const diffConf = await cache.getBatchParsed(HASH, false, { dpi: 180 });
+    expect(typeof parsed === "string").toBe(true);
+    expect(parsed).toBe(PARSED_TEXT);
+    const noMd = await cache.getParsed(HASH, true, false, undefined);
+    expect(noMd).toBeNull();
+    const diffConf = await cache.getParsed(HASH, false, true, { dpi: 180 });
     expect(diffConf).toBeNull();
-    const noConf = await cache.getBatchParsed(HASH, false, undefined);
+    const noConf = await cache.getParsed(HASH, false, true, undefined);
     expect(noConf).toBeNull();
-    // demonstrate that there is no leaking from batch-parsed toparsed
-    const noParsed = await cache.getParsed(HASH, false, config);
-    expect(noParsed).toBeNull();
-  });
-
-  it("Test with text, no config", async () => {
-    const cache = new RedisCache();
-    await cache.setBatchParsed(HASH, true, undefined, BATCH_TEXT);
-    const parsed = await cache.getBatchParsed(HASH, true, undefined);
-    expect(parsed).toBeTruthy();
-    expect(parsed).toStrictEqual(BATCH_TEXT);
-    const noText = await cache.getBatchParsed(HASH, false, undefined);
-    expect(noText).toBeNull();
-    const noConf = await cache.getBatchParsed(HASH, true, { dpi: 180 });
-    expect(noConf).toBeNull();
-    // demonstrate that there is no leaking from batch-parsed to parsed
-    const noParsed = await cache.getParsed(HASH, true, undefined);
-    expect(noParsed).toBeNull();
-  });
-
-  it("Test with text, w/config", async () => {
-    const cache = new RedisCache();
-    const config: Partial<LiteParseConfig> = { targetPages: "1", dpi: 180 };
-    await cache.setBatchParsed(HASH, true, config, BATCH_TEXT);
-    const parsed = await cache.getBatchParsed(HASH, true, config);
-    expect(parsed).toBeTruthy();
-    expect(parsed).toStrictEqual(BATCH_TEXT);
-    const noText = await cache.getBatchParsed(HASH, false, undefined);
-    expect(noText).toBeNull();
-    const diffConf = await cache.getBatchParsed(HASH, true, { dpi: 180 });
-    expect(diffConf).toBeNull();
-    const noConf = await cache.getBatchParsed(HASH, true, undefined);
-    expect(noConf).toBeNull();
-    // demonstrate that there is no leaking from parsed to batch-parsed
-    const noParsed = await cache.getParsed(HASH, true, config);
-    expect(noParsed).toBeNull();
   });
 });
 
@@ -295,5 +269,36 @@ describe("Test caching for screenshots", () => {
     expect(noConf).toBeNull();
     const noPages = await cache.getScreenshot(HASH, undefined, config);
     expect(noPages).toBeNull();
+  });
+});
+
+describe("Test caching for isComplex", () => {
+  it("Test with no config", async () => {
+    const cache = new RedisCache();
+    await cache.setIsComplex(HASH, undefined, COMPLEXITY);
+    const result = await cache.getIsComplex(HASH, undefined);
+    expect(result).toBeTruthy();
+    expect(Array.isArray(result)).toBe(true);
+    expect(result).toStrictEqual(COMPLEXITY);
+    const noConf = await cache.getIsComplex(HASH, { dpi: 180 });
+    expect(noConf).toBeNull();
+    const noHash = await cache.getIsComplex("other_hash", undefined);
+    expect(noHash).toBeNull();
+  });
+
+  it("Test with config", async () => {
+    const cache = new RedisCache();
+    const config: Partial<LiteParseConfig> = { targetPages: "1", dpi: 180 };
+    await cache.setIsComplex(HASH, config, COMPLEXITY);
+    const result = await cache.getIsComplex(HASH, config);
+    expect(result).toBeTruthy();
+    expect(Array.isArray(result)).toBe(true);
+    expect(result).toStrictEqual(COMPLEXITY);
+    const diffConf = await cache.getIsComplex(HASH, { dpi: 180 });
+    expect(diffConf).toBeNull();
+    const noConf = await cache.getIsComplex(HASH, undefined);
+    expect(noConf).toBeNull();
+    const noHash = await cache.getIsComplex("other_hash", config);
+    expect(noHash).toBeNull();
   });
 });

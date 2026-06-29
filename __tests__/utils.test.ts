@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parse, screenshot } from "../src/utils";
+import { isComplex, parse, screenshot } from "../src/utils";
 import { readFile } from "fs/promises";
 import path from "path";
 import Stream from "stream";
@@ -266,5 +266,42 @@ describe("Test screenshot", () => {
     expect(result[0]?.width).toBeGreaterThan(0);
     expect(typeof result[0]?.height).toBe("number");
     expect(result[0]?.height).toBeGreaterThan(0);
+  });
+});
+
+describe("Test isComplex", () => {
+  it("Test isComplex PDF file (no config)", async () => {
+    const file = await toMulterFile(PDF_FILE_PATH, "application/pdf");
+    const result = await isComplex({ file });
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBe(2); // PDF has two pages
+    for (let i = 0; i < result.length; i++) {
+      const stats = result[i]!;
+      expect(stats.pageNumber).toBe(i + 1);
+      expect(typeof stats.textLength).toBe("number");
+      expect(typeof stats.textCoverage).toBe("number");
+      expect(typeof stats.imageCoverage).toBe("number");
+      expect(typeof stats.hasSubstantialImages).toBe("boolean");
+      expect(typeof stats.fullPageImage).toBe("boolean");
+      expect(typeof stats.isGarbled).toBe("boolean");
+      expect(typeof stats.needsOcr).toBe("boolean");
+      expect(typeof stats.pageArea).toBe("number");
+      expect(Array.isArray(stats.reasons)).toBe(true);
+      // Reasons array is empty exactly when needsOcr is false
+      if (stats.needsOcr) {
+        expect(stats.reasons.length).toBeGreaterThan(0);
+      } else {
+        expect(stats.reasons.length).toBe(0);
+      }
+    }
+  });
+
+  it("Test isComplex PDF file (w/config)", async () => {
+    const file = await toMulterFile(PDF_FILE_PATH, "application/pdf");
+    const config: Partial<LiteParseConfig> = { targetPages: "1" };
+    const result = await isComplex({ file, config });
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBe(1); // only one targeted page
+    expect(result[0]?.pageNumber).toBe(1);
   });
 });

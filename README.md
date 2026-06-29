@@ -77,7 +77,10 @@ Or, if `uv` is available, run it directly:
 #### Parse a single file (plain text response)
 
 ```bash
+# plain text
 ./scripts/server-test.py file path/to/document.pdf text
+# markdown
+./scripts/server-test.py file path/to/document.pdf markdown
 ```
 
 #### Screenshot pages of a document
@@ -91,3 +94,9 @@ Or, if `uv` is available, run it directly:
 ```
 
 Screenshots are saved as `page_0.png`, `page_1.png`, etc. in the current working directory.
+
+#### Infer complexity of a document
+
+```bash
+./scripts/server-test.py is-complex path/to/document.pdf
+```

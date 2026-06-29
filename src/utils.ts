@@ -13,6 +13,11 @@ import {
   screenPagesCount,
   screenFilesTotal,
   screenFileSizeBytes,
+  isComplexFileSizeBytes,
+  isComplexDurationMs,
+  isComplexPagesCount,
+  isComplexFilesTotal,
+  isComplexErrorsTotal,
 } from "./telemetry";
 
 export const SCREENSHOT_MIMETYPE = "image/png";
@@ -46,7 +51,7 @@ export async function parse({
 
     const startTime = performance.now();
     try {
-      const result = await lit.parse(file.buffer, true);
+      const result = await lit.parse(file.buffer);
       const duration = performance.now() - startTime;
 
       parseDurationMs.record(duration, { "parse.mode": mode });
@@ -105,7 +110,7 @@ export async function screenshot({
 
     try {
       const startTime = performance.now();
-      const result = await lit.screenshot(file.buffer, pageNumbers, true);
+      const result = await lit.screenshot(file.buffer, pageNumbers);
       const duration = performance.now() - startTime;
 
       screenDurationMs.record(duration);
@@ -126,6 +131,54 @@ export async function screenshot({
       return result;
     } catch (err) {
       screenErrorsTotal.add(1);
+      span.recordException(err as Error);
+      span.setStatus({ code: SpanStatusCode.ERROR });
+      span.end();
+      logger.error(`An error occurred: ${err}`);
+      throw err;
+    }
+  });
+}
+
+export async function isComplex({
+  file,
+  config = undefined,
+}: {
+  file: Express.Multer.File;
+  config?: Partial<LiteParseConfig> | undefined;
+}) {
+  const logger = new PrefixedLogger("[isComplex]");
+
+  return tracer.startActiveSpan("isComplex", async (span) => {
+    isComplexFileSizeBytes.record(file.size);
+    span.setAttributes({
+      "file.name": file.originalname,
+      "file.size": file.buffer.length,
+      "file.mimetype": file.mimetype,
+    });
+
+    const lit = new LiteParse(config);
+    logger.debug(`Starting to infer file complexity: ${file.originalname}`);
+
+    try {
+      const startTime = performance.now();
+      const result = await lit.isComplex(file.buffer);
+      const duration = performance.now() - startTime;
+
+      isComplexDurationMs.record(duration);
+      isComplexPagesCount.record(result.length);
+      isComplexFilesTotal.add(1);
+
+      span.setAttributes({
+        "isComplex.pages_count": result.length,
+        "isComplex.duration_ms": Math.round(duration),
+      });
+
+      logger.debug(`Finished inferring complexity for ${file.originalname}`);
+      span.end();
+      return result;
+    } catch (err) {
+      isComplexErrorsTotal.add(1);
       span.recordException(err as Error);
       span.setStatus({ code: SpanStatusCode.ERROR });
       span.end();

@@ -14,13 +14,34 @@ from pathlib import Path
 import httpx
 
 
-def single_file_req(file: str, text: bool) -> None:
+def single_file_req(file: str, text: bool, markdown: bool) -> None:
     with httpx.Client() as client:
         with open(file, "rb") as f:
             files = {"file": f}
             response = client.post(
                 "http://localhost:5707/parse",
-                params={"text": "true" if text else "false"},
+                params={
+                    "text": "true" if text else "false",
+                    "markdown": "true" if markdown else "false",
+                },
+                files=files,
+            )
+            response.raise_for_status()
+            txt = response.content.decode("utf-8")
+    print("RESPONSE")
+    try:
+        t = json.loads(txt)
+        print(json.dumps(t, indent=2))
+    except Exception:
+        print(txt)
+
+
+def is_complex_req(file: str) -> None:
+    with httpx.Client() as client:
+        with open(file, "rb") as f:
+            files = {"file": f}
+            response = client.post(
+                "http://localhost:5707/is-complex",
                 files=files,
             )
             response.raise_for_status()
@@ -71,13 +92,18 @@ if __name__ == "__main__":
         )
     if sys.argv[1] == "file":
         text = False
+        md = False
         if len(sys.argv) >= 4 and sys.argv[3] == "text":
             text = True
-        single_file_req(sys.argv[2], text)
+        if len(sys.argv) >= 4 and sys.argv[3] == "markdown":
+            md = True
+        single_file_req(sys.argv[2], text, md)
     elif sys.argv[1] == "screen":
         pages = None
         if len(sys.argv) >= 4 and sys.argv[3].startswith("pages="):
             pages = sys.argv[3].removeprefix("pages=")
         screenshot_req(sys.argv[2], pages)
+    elif sys.argv[1] == "is-complex":
+        is_complex_req(sys.argv[2])
     else:
         print(f"Unrecognized command: {sys.argv[1]}")
