@@ -147,7 +147,10 @@ export class RedisCache {
 }
 
 export function getFileHash(file: Express.Multer.File) {
-  return crypto.createHash("sha256").update(file.buffer).digest("hex");
+  return crypto
+    .createHash("sha256")
+    .update(new Uint8Array(file.buffer))
+    .digest("hex");
 }
 
 let cache: RedisCache | undefined = undefined;

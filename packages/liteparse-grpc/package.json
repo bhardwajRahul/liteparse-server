@@ -1,0 +1,38 @@
+{
+  "name": "liteparse-grpc",
+  "module": "src/server.ts",
+  "type": "module",
+  "bin": {
+    "liteparse-server": "dist/server.js",
+    "liteparse-client": "dist/client.js"
+  },
+  "private": true,
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/bun": "latest",
+    "eslint": "^10.6.0",
+    "globals": "^17.7.0",
+    "jiti": "^2.7.0",
+    "prettier": "^3.9.4",
+    "ts-proto": "^2.11.10",
+    "typescript-eslint": "^8.62.1"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@bufbuild/protobuf": "^2.12.1",
+    "@grpc/grpc-js": "^1.14.4",
+    "@llamaindex/liteparse": "^2.4.0"
+  },
+  "scripts": {
+    "lint": "eslint src/**",
+    "prettier": "prettier --write .",
+    "prettier:check": "prettier .",
+    "build:server": "bun build ./src/server.ts --outdir ./dist --target node",
+    "build:client": "bun build ./src/client.ts --outdir ./dist --target node",
+    "build": "bun run build:server && bun run build:client",
+    "start:server": "bun run src/server.ts",
+    "start:client": "bun run src/client.ts"
+  }
+}
