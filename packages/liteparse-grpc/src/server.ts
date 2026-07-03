@@ -12,8 +12,22 @@ import {
   ParserServiceService,
 } from "./protogen/parser";
 import * as grpc from "@grpc/grpc-js";
+import pino from "pino";
 
 const IMAGE_MIMETYPE = "image/png";
+
+const isDev = process.env.NODE_ENV !== "production";
+const logger = pino({
+  level: process.env.LOG_LEVEL ?? "info",
+  ...(isDev
+    ? {
+        transport: {
+          target: "pino-pretty",
+          options: { colorize: true, translateTime: "SYS:HH:MM:ss.l" },
+        },
+      }
+    : {}),
+});
 
 function toImplOutputFormat(outputFormat: OutputFormat): ImplOutputFormat {
   switch (outputFormat) {
@@ -72,9 +86,20 @@ function toImplLiteParseConfig(
 const parseService: ParserServiceServer = {
   parse: (call, callback) => {
     (async () => {
+      const log = logger.child({ rpc: "parse", peer: call.getPeer() });
+      const start = Date.now();
+      log.info({ fileBytes: call.request.file?.length ?? 0 }, "parse start");
       try {
         const lit = new LiteParse(toImplLiteParseConfig(call.request.config));
         const result = await lit.parse(call.request.file);
+        log.info(
+          {
+            durationMs: Date.now() - start,
+            pages: result.pages.length,
+            textLength: result.text?.length ?? 0,
+          },
+          "parse ok",
+        );
         callback(null, {
           text: result.text,
           pages: result.pages.map((p) => {
@@ -95,15 +120,26 @@ const parseService: ParserServiceServer = {
           }),
         });
       } catch (err) {
+        log.error({ durationMs: Date.now() - start, err }, "parse failed");
         callback(err as grpc.ServiceError);
       }
     })();
   },
   isComplex: (call, callback) => {
     (async () => {
+      const log = logger.child({ rpc: "isComplex", peer: call.getPeer() });
+      const start = Date.now();
+      log.info(
+        { fileBytes: call.request.file?.length ?? 0 },
+        "isComplex start",
+      );
       try {
         const lit = new LiteParse(toImplLiteParseConfig(call.request.config));
         const result = await lit.isComplex(call.request.file);
+        log.info(
+          { durationMs: Date.now() - start, pages: result.length },
+          "isComplex ok",
+        );
         callback(null, {
           complexity: result.map((c) => {
             return {
@@ -124,15 +160,26 @@ const parseService: ParserServiceServer = {
           }),
         });
       } catch (err) {
+        log.error({ durationMs: Date.now() - start, err }, "isComplex failed");
         callback(err as grpc.ServiceError);
       }
     })();
   },
   screenshot: (call, callback) => {
     (async () => {
+      const log = logger.child({ rpc: "screenshot", peer: call.getPeer() });
+      const start = Date.now();
+      log.info(
+        { fileBytes: call.request.file?.length ?? 0 },
+        "screenshot start",
+      );
       try {
         const lit = new LiteParse(toImplLiteParseConfig(call.request.config));
         const result = await lit.screenshot(call.request.file);
+        log.info(
+          { durationMs: Date.now() - start, pages: result.length },
+          "screenshot ok",
+        );
         callback(null, {
           screenshots: result.map((s) => {
             return {
@@ -145,22 +192,34 @@ const parseService: ParserServiceServer = {
           }),
         });
       } catch (err) {
+        log.error({ durationMs: Date.now() - start, err }, "screenshot failed");
         callback(err as grpc.ServiceError);
       }
     })();
   },
 };
 
+const bindAddr = process.env.GRPC_BIND_ADDR ?? "127.0.0.1:50051";
 const server = new grpc.Server();
 server.addService(ParserServiceService, parseService);
 server.bindAsync(
-  "127.0.0.1:50051",
+  bindAddr,
   grpc.ServerCredentials.createInsecure(),
   (err, port) => {
     if (err) {
-      console.error(err);
+      logger.error({ err, bindAddr }, "failed to bind gRPC server");
       return;
     }
-    console.log(`gRPC server listening on ${port}`);
+    logger.info({ port, bindAddr }, "gRPC server listening");
   },
 );
+
+for (const signal of ["SIGINT", "SIGTERM"] as const) {
+  process.on(signal, () => {
+    logger.info({ signal }, "shutting down");
+    server.tryShutdown((err) => {
+      if (err) logger.error({ err }, "shutdown error");
+      process.exit(err ? 1 : 0);
+    });
+  });
+}

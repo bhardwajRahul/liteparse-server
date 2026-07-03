@@ -43,9 +43,30 @@ vi.mock("ioredis", async () => {
 
 const HASH = "fake_hash";
 const PARSED_PAGES: ParsedPage[] = [
-  { pageNum: 1, text: "hello", textItems: [], width: 100, height: 200 },
-  { pageNum: 2, text: "bye", textItems: [], width: 150, height: 250 },
-  { pageNum: 3, text: "salut", textItems: [], width: 130, height: 180 },
+  {
+    pageNum: 1,
+    text: "hello",
+    markdown: "hello",
+    textItems: [],
+    width: 100,
+    height: 200,
+  },
+  {
+    pageNum: 2,
+    text: "bye",
+    markdown: "bye",
+    textItems: [],
+    width: 150,
+    height: 250,
+  },
+  {
+    pageNum: 3,
+    text: "salut",
+    markdown: "salut",
+    textItems: [],
+    width: 130,
+    height: 180,
+  },
 ];
 const PARSED_TEXT = "hello\nbye\nsalut";
 
