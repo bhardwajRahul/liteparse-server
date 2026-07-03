@@ -14,6 +14,10 @@
     "name": "LlamaIndex",
     "url": "https://llamaindex.ai"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/run-llama/liteparse-server.git"
+  },
   "type": "module",
   "main": "./dist/protogen/parser.js",
   "types": "./dist/types/protogen/parser.d.ts",
