@@ -1,7 +1,7 @@
 {
   "name": "@llamaindex/liteparse-grpc",
   "description": "gRPC server powered by LiteParse to perform parsing, screenshotting and complexity estimation of unstructured documents",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "keywords": [
     "parsing",
     "text-extraction",
