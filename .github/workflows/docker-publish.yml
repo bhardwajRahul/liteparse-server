@@ -4,6 +4,17 @@ on:
   push:
     tags: ["v*.*.*"]
     branches: [main]
+    paths:
+      - src/**
+      - package.json
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - packages/liteparse-grpc/src/**
+      - packages/liteparse-grpc/package.json
+      - packages/liteparse-grpc/buildscripts/**
+      - buildscripts/**
+      - slim.Dockerfile
+      - packages/liteparse-grpc/Dockerfile
 
 env:
   REGISTRY: ghcr.io
