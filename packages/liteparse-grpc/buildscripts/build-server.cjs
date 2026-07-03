@@ -17,6 +17,7 @@ esbuild
       "@grpc/grpc-js",
       "@bufbuild/protobuf",
       "pino",
+      "pino-pretty",
     ],
   })
   .catch(() => process.exit(1));
