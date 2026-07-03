@@ -1,0 +1,80 @@
+name: Publish NPM packages
+on:
+  push:
+    tags:
+      - "rest@**"
+      - "grpc@**"
+
+jobs:
+  publish-grpc:
+    permissions:
+      id-token: write
+      contents: read
+    name: Publish - GRPC package
+    runs-on: ubuntu-latest
+    if: ${{ startsWith(github.ref, 'refs/tags/grpc') }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: "11.9.0"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24.4.0"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Publish
+        run: |
+          pnpm config set provenance true
+          echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
+          pnpm publish --access public
+        working-directory: packages/liteparse-grpc
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  publish-rest:
+    permissions:
+      id-token: write
+      contents: read
+    name: Publish - REST package
+    runs-on: ubuntu-latest
+    if: ${{ startsWith(github.ref, 'refs/tags/rest') }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: "11.9.0"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24.4.0"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Publish
+        run: |
+          pnpm config set provenance true
+          echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
+          pnpm publish --access public
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

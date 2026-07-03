@@ -1,12 +1,11 @@
 {
-  "name": "@llamaindex/liteparse-server",
-  "module": "src/index.ts",
-  "type": "module",
+  "name": "@llamaindex/liteparse-rest",
   "author": {
-    "name": "Clelia Astra Bertelli",
-    "email": "clelia@runllama.ai"
+    "name": "LlamaIndex",
+    "url": "https://llamaindex.ai"
   },
-  "description": "API server running LiteParse to parse and screenshot files, wrote in Express.js",
+  "version": "0.1.0",
+  "description": "REST API server running LiteParse to parse and screenshot files, wrote in Express.js",
   "keywords": [
     "liteparse",
     "document-parsing",
@@ -14,12 +13,23 @@
     "server",
     "express-js"
   ],
+  "type": "module",
+  "main": "dist/slim.js",
+  "files": [
+    "dist/*.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "bin": {
+    "liteparse-rest-server": "dist/slim.js"
+  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@types/bun": "latest",
     "@types/express": "^5.0.6",
     "@types/multer": "^2.1.0",
+    "@types/node": "^26.1.0",
     "@types/supertest": "^7.2.0",
+    "esbuild": "^0.28.1",
     "eslint": "^10.3.0",
     "globals": "^17.6.0",
     "jiti": "^2.6.1",
@@ -40,21 +50,23 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "@llamaindex/liteparse": "^2.2.1",
+    "@llamaindex/liteparse": "^2.4.0",
     "@opentelemetry/api": "^1.9.1",
     "express": "^5.2.1",
     "multer": "^2.1.1",
     "tslog": "^4.10.2"
   },
   "scripts": {
-    "start:bun": "bun run --preload ./src/instrumentation.ts src/index.ts",
-    "start:node": "node --import ./src/instrumentation.ts src/index.ts",
-    "start-slim:bun": "bun run src/run.ts",
-    "start-slim:node": "node src/run.ts",
+    "start": "node --import ./src/instrumentation.ts src/index.ts",
+    "start:slim": "pnpm run build:slim && ./dist/slim.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint src/** && eslint __tests__/**",
     "prettier": "prettier --write .",
-    "prettier:check": "prettier ."
-  }
+    "prettier:check": "prettier .",
+    "build:slim": "node buildscripts/build-slim.cjs",
+    "build": "pnpm run build:slim",
+    "prepublishOnly": "pnpm run build"
+  },
+  "packageManager": "pnpm@11.9.0"
 }

@@ -39,7 +39,7 @@ cd ../..
 ### 1. Install dependencies
 
 ```bash
-bun install
+pnpm install
 ```
 
 ### 2. Start the supporting services
@@ -51,7 +51,7 @@ docker compose up -d
 ### 3. Start the API server
 
 ```bash
-bun --preload ./src/instrumentation.ts src/index.ts
+node --import ./src/instrumentation.ts src/index.ts
 ```
 
 The server listens on **port 5707**.

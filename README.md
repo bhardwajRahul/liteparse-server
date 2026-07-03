@@ -1,54 +1,76 @@
-# liteparse-server
+# @llamaindex/liteparse-rest
 
-An Express server that exposes [`@llamaindex/liteparse`](https://www.npmjs.com/package/@llamaindex/liteparse) as an HTTP parsing backend. It supports single-file parsing and page screenshotting. An example of how to use it with built-in rate limiting (Redis), distributed tracing (OpenTelemetry → Jaeger), and metrics (OpenTelemetry → Prometheus → Grafana) is available [here](./examples/docker-compose).
+An [Express](https://expressjs.com) server that exposes [`@llamaindex/liteparse`](https://www.npmjs.com/package/@llamaindex/liteparse) as an HTTP parsing backend. It supports single-file parsing, page screenshotting, and document complexity estimation.
+
+For a full production setup with built-in rate limiting (Redis), distributed tracing (OpenTelemetry → Jaeger), and metrics (OpenTelemetry → Prometheus → Grafana), see the [Docker Compose example](./examples/docker-compose).
+
+> **Prefer gRPC?** This repo also ships [`@llamaindex/liteparse-grpc`](./packages/liteparse-grpc) — a gRPC server (and matching client) exposing the same LiteParse capabilities. See its [README](./packages/liteparse-grpc/README.md) for details.
 
 ## Table of contents
 
-- [Requirements](#requirements)
-- [Minimal Server](#minimal-server)
-- [API Specification](#api-specification)
+- [Installation](#installation)
+- [Quick start](#quick-start)
+- [Docker](#docker)
+- [Full server setup](#full-server-setup)
+- [API specification](#api-specification)
 - [Testing with the test script](#testing-with-the-test-script)
+- [Related packages](#related-packages)
 
-## Requirements
-
-- [Bun](https://bun.sh) ≥ 1.0
-- [Docker](https://docs.docker.com/get-docker/) and Docker Compose (for the supporting services)
-- [uv](https://github.com/astral-sh/uv) (for the test script, optional)
-
-## Minimal Server
-
-`src/slim.ts` is a minimal version of the liteparse server that removes all built-in caching, rate limiting and and observability. It exposes the same two endpoints (`POST /parse`, `POST /screenshots`) and keeps rate limiting and logging, but requires **no Redis caching/rate-limiting**, **no OpenTelemetry Collector**, and **no supporting metrics/tracing services**.
-
-### Running locally
+## Installation
 
 ```bash
-bun run start-slim:bun
-# or with Node
-npm run start-slim:node
+npm install -g @llamaindex/liteparse-rest
+# or
+pnpm add -g @llamaindex/liteparse-rest
 ```
 
-The server listens on **port 5707**.
+You can also invoke it directly without installing:
 
-### Building and running with Docker
+```bash
+npx @llamaindex/liteparse-rest
+```
 
-The `slim.Dockerfile` produces a self-contained image with no observability dependencies:
+## Quick start
+
+Once installed, launch the server with:
+
+```bash
+liteparse-rest-server
+```
+
+The server listens on **port 5707** by default. Point a client at `http://localhost:5707` and start hitting the [API](#api-specification).
+
+The published binary is the **slim** build — it removes built-in Redis caching, rate limiting and OpenTelemetry observability so it has **no external dependencies**. If you need those features, use the [full server setup](#full-server-setup).
+
+## Docker
+
+The repo ships a `slim.Dockerfile` that produces a self-contained image with no observability dependencies:
 
 ```bash
 # Build the image
-docker build -f slim.Dockerfile -t liteparse-server-slim .
+docker build -f slim.Dockerfile -t liteparse-rest .
+
 # Run exposing port 5707
-docker run -p 5707:5707 liteparse-server-slim
+docker run -p 5707:5707 liteparse-rest
 ```
 
 The API is then available at **http://localhost:5707**.
 
-## Full Server Setup
+## Full server setup
 
-If you wish to leverage an all-in-one server setup, with **built-in observability, caching and rate-limiting**, you can follow [this guide](./examples/docker-compose/README.md).
+If you want an all-in-one deployment with **built-in observability, caching, and rate-limiting**, follow the guide in [`examples/docker-compose`](./examples/docker-compose/README.md).
 
-## API Specification
+## API specification
 
-The full API specification is available [here](./API_SPEC.md)
+The server exposes three endpoints:
+
+| Method | Path           | Description                                         |
+| ------ | -------------- | --------------------------------------------------- |
+| `POST` | `/parse`       | Parse a file into JSON pages, text, or markdown     |
+| `POST` | `/screenshots` | Render document pages as PNG images (NDJSON stream) |
+| `POST` | `/is-complex`  | Estimate document complexity / need for OCR         |
+
+The full specification — request fields, query parameters, response shapes and error codes — is available in [`API_SPEC.md`](./API_SPEC.md).
 
 ## Testing with the test script
 
@@ -56,7 +78,7 @@ The full API specification is available [here](./API_SPEC.md)
 
 ### Usage
 
-```
+```bash
 python scripts/server-test.py <command> <path> [options]
 ```
 
@@ -74,7 +96,7 @@ Or, if `uv` is available, run it directly:
 ./scripts/server-test.py file path/to/document.pdf
 ```
 
-#### Parse a single file (plain text response)
+#### Parse a single file (plain text or markdown response)
 
 ```bash
 # plain text
@@ -95,8 +117,21 @@ Or, if `uv` is available, run it directly:
 
 Screenshots are saved as `page_0.png`, `page_1.png`, etc. in the current working directory.
 
-#### Infer complexity of a document
+#### Estimate document complexity
 
 ```bash
 ./scripts/server-test.py is-complex path/to/document.pdf
 ```
+
+## Related packages
+
+This repository is a pnpm workspace containing:
+
+| Package                                                   | Description                                                                                |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| [`@llamaindex/liteparse-rest`](./)                        | This package — an Express HTTP server wrapping LiteParse                                   |
+| [`@llamaindex/liteparse-grpc`](./packages/liteparse-grpc) | A gRPC server + client for the same LiteParse capabilities, with a bundled `.proto` schema |
+
+## License
+
+MIT
