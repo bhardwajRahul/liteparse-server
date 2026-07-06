@@ -10,11 +10,6 @@ import * as grpc from "@grpc/grpc-js";
 import fs from "fs/promises";
 import path from "path";
 
-const client = new ParserServiceClient(
-  "127.0.0.1:50051",
-  grpc.credentials.createInsecure(),
-);
-
 async function getBufAndConfig(
   file: string,
   configFile: string | undefined,
@@ -56,7 +51,13 @@ async function runClient(
   configFile: string | undefined,
   parseOptions: { json?: boolean; markdown?: boolean },
   screenshotOptions: { destDir?: string },
+  port: number | undefined,
 ) {
+  const client = new ParserServiceClient(
+    `127.0.0.1:${port ?? 50051}`,
+    grpc.credentials.createInsecure(),
+  );
+
   switch (action) {
     case "parse": {
       const { buf, conf } = await getBufAndConfig(
@@ -134,6 +135,7 @@ Commands:
 Shared options:
   FILE: File to parse/screenshot/estimate the complexity of. Positional argument, required.
   --config-file, -c <CONFIG_FILE>: JSON file where the LiteParse configuration is stored. Optional.
+  --port, -p <PORT>: port which the gRPC server is bound to.
 
 parse command options:
   --json, -j: Whether or not to output the parse result as a JSON array. Optional, defaults to false.
@@ -156,6 +158,7 @@ Run liteparse-client --help to show this help message again.
     process.exit(1);
   }
   let configFile: string | undefined = undefined;
+  let port: number | undefined = undefined;
   const parseOptions: { json?: boolean; markdown?: boolean } = {};
   const screenshotOptions: { destDir?: string } = {};
   let i = 4;
@@ -169,6 +172,15 @@ Run liteparse-client --help to show this help message again.
         process.exit(1);
       }
       configFile = cand;
+    } else if (arg == "--port" || arg == "-p") {
+      const cand = args[i + 1];
+      if (!cand) {
+        console.error(
+          "invalid use of --config-file. It must be followed by a file path",
+        );
+        process.exit(1);
+      }
+      port = parseInt(cand);
     } else if (arg == "--json" || arg == "-j") {
       parseOptions.json = true;
     } else if (arg == "--markdown" || arg == "-m") {
@@ -192,6 +204,7 @@ Run liteparse-client --help to show this help message again.
     configFile,
     parseOptions,
     screenshotOptions,
+    port,
   );
 }
 
